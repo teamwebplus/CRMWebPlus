@@ -27,39 +27,32 @@ export default function UserProfile({ onNavigate }: UserProfileProps) {
 
     try {
       setLoading(true);
+      // Use limit(1) instead of maybeSingle() to handle multiple profiles gracefully
       const { data: profileData, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .order('created_at', { ascending: true }) // Get the oldest profile first for consistency
+        .limit(1);
 
       if (fetchError) {
         console.error('Error fetching profile:', fetchError);
-        
-        // Check if this is a multiple rows error (data integrity issue)
-        if (fetchError.code === 'PGRST116') {
-          console.error('CRITICAL: Multiple profiles found for user ID:', user.id);
-          console.error('This indicates a data integrity issue that needs to be resolved.');
-          
-          // Try to get all profiles for this user to understand the issue
-          const { data: allProfiles, error: allProfilesError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('user_id', user.id);
-          
-          if (!allProfilesError && allProfiles && allProfiles.length > 0) {
-            console.error('Found profiles:', allProfiles);
-            // Use the first profile as a fallback, but log this decision
-            console.warn('Using first profile as fallback due to multiple profiles');
-            setProfile(allProfiles[0]);
-          }
-        }
         return;
       }
 
-      if (profileData) {
-        // Profile exists, use it
-        setProfile(profileData);
+      if (profileData && profileData.length > 0) {
+        // Profile exists, use the first one
+        setProfile(profileData[0]);
+        
+        // Check if there are multiple profiles and log a warning
+        const { count, error: countError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        if (!countError && count && count > 1) {
+          console.warn(`Data integrity issue: Found ${count} profiles for user ID: ${user.id}. Using the oldest profile. This should be resolved by an administrator.`);
+        }
       } else {
         // No profile exists, create a basic one from auth user data
         console.log('No profile found, creating new profile for user:', user.id);

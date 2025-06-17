@@ -27,15 +27,42 @@ export default function UserProfile({ onNavigate }: UserProfileProps) {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data: profileData, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching profile:', error);
-        // If no profile exists, create a basic one from auth user data
+      if (fetchError) {
+        console.error('Error fetching profile:', fetchError);
+        
+        // Check if this is a multiple rows error (data integrity issue)
+        if (fetchError.code === 'PGRST116') {
+          console.error('CRITICAL: Multiple profiles found for user ID:', user.id);
+          console.error('This indicates a data integrity issue that needs to be resolved.');
+          
+          // Try to get all profiles for this user to understand the issue
+          const { data: allProfiles, error: allProfilesError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', user.id);
+          
+          if (!allProfilesError && allProfiles && allProfiles.length > 0) {
+            console.error('Found profiles:', allProfiles);
+            // Use the first profile as a fallback, but log this decision
+            console.warn('Using first profile as fallback due to multiple profiles');
+            setProfile(allProfiles[0]);
+          }
+        }
+        return;
+      }
+
+      if (profileData) {
+        // Profile exists, use it
+        setProfile(profileData);
+      } else {
+        // No profile exists, create a basic one from auth user data
+        console.log('No profile found, creating new profile for user:', user.id);
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
           .insert([{
@@ -52,8 +79,6 @@ export default function UserProfile({ onNavigate }: UserProfileProps) {
         } else {
           setProfile(newProfile);
         }
-      } else {
-        setProfile(data);
       }
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);

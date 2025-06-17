@@ -13,7 +13,8 @@ import {
   CheckSquare,
   Activity,
   UserCog,
-  Database
+  Database,
+  TestTube
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -35,6 +36,7 @@ const menuItems = [
   { id: 'documents', label: 'Documents', icon: FileText },
   { id: 'users', label: 'Users', icon: UserCog },
   { id: 'backup', label: 'Backup', icon: Database },
+  { id: 'testing', label: 'Testing', icon: TestTube },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 

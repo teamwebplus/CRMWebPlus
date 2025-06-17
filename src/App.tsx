@@ -20,6 +20,7 @@ import SettingsView from './components/Settings/SettingsView';
 import DocumentsView from './components/Documents/DocumentsView';
 import UsersView from './components/Users/UsersView';
 import BackupView from './components/Backup/BackupView';
+import CRUDTestView from './components/Testing/CRUDTestView';
 import { Users, Target, TrendingUp, DollarSign } from 'lucide-react';
 import { useDashboardStats } from './hooks/useDashboardStats';
 
@@ -118,6 +119,9 @@ function AppContent() {
       case 'backup':
         return <BackupView />;
       
+      case 'testing':
+        return <CRUDTestView />;
+      
       case 'settings':
         return <SettingsView />;
       
@@ -150,6 +154,8 @@ function AppContent() {
         return 'User Management';
       case 'backup':
         return 'Database Backup';
+      case 'testing':
+        return 'CRUD Testing';
       case 'settings':
         return 'Settings';
       default:
@@ -181,6 +187,8 @@ function AppContent() {
         return 'Manage user accounts, roles, and permissions';
       case 'backup':
         return 'Create and manage database backups for data protection';
+      case 'testing':
+        return 'Test all CRUD operations across CRM modules';
       case 'settings':
         return 'Configure your CRM settings and preferences';
       default:

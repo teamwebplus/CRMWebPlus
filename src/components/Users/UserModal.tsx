@@ -15,7 +15,7 @@ interface UserModalProps {
   onClose: () => void;
   user?: Profile;
   mode: 'create' | 'edit' | 'view';
-  onSave: (data: ProfileInsert | ProfileUpdate) => Promise<{ data: any; error: string | null }>;
+  onSave: (data: Omit<ProfileInsert, 'user_id'> | ProfileUpdate) => Promise<{ data: any; error: string | null }>;
 }
 
 const roleOptions = [
@@ -103,10 +103,6 @@ export default function UserModal({ isOpen, onClose, user, mode, onSave }: UserM
         department: formData.department?.trim() || null,
         avatar_url: formData.avatar_url?.trim() || null,
       };
-
-      // Remove the problematic user_id assignment for create mode
-      // The user_id should be handled by the backend/database trigger
-      // or set to an actual authenticated user's ID
 
       const { error } = await onSave(userData);
       

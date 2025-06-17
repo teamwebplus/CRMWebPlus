@@ -51,6 +51,23 @@ export interface Database {
           updated_at?: string;
         };
       };
+      users: {
+        Row: {
+          id: string;
+          email: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          created_at?: string;
+        };
+      };
       clients: {
         Row: {
           id: string;
@@ -276,6 +293,53 @@ export interface Database {
           client_id?: string | null;
           lead_id?: string | null;
           opportunity_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      activities: {
+        Row: {
+          id: string;
+          type: 'call' | 'email' | 'meeting' | 'task' | 'note';
+          title: string;
+          description: string;
+          client_id: string | null;
+          lead_id: string | null;
+          opportunity_id: string | null;
+          completed: boolean;
+          due_date: string | null;
+          priority: 'low' | 'medium' | 'high' | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          type: 'call' | 'email' | 'meeting' | 'task' | 'note';
+          title: string;
+          description: string;
+          client_id?: string | null;
+          lead_id?: string | null;
+          opportunity_id?: string | null;
+          completed?: boolean;
+          due_date?: string | null;
+          priority?: 'low' | 'medium' | 'high' | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          type?: 'call' | 'email' | 'meeting' | 'task' | 'note';
+          title?: string;
+          description?: string;
+          client_id?: string | null;
+          lead_id?: string | null;
+          opportunity_id?: string | null;
+          completed?: boolean;
+          due_date?: string | null;
+          priority?: 'low' | 'medium' | 'high' | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;

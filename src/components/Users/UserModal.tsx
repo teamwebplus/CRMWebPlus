@@ -15,7 +15,7 @@ interface UserModalProps {
   onClose: () => void;
   user?: Profile;
   mode: 'create' | 'edit' | 'view';
-  onSave: (data: Omit<ProfileInsert, 'user_id'> | ProfileUpdate) => Promise<{ data: any; error: string | null }>;
+  onSave: (data: ProfileInsert | ProfileUpdate) => Promise<{ data: any; error: string | null }>;
 }
 
 const roleOptions = [
@@ -144,6 +144,23 @@ export default function UserModal({ isOpen, onClose, user, mode, onSave }: UserM
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Demo Notice */}
+        {mode === 'create' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <Shield className="h-5 w-5 text-blue-400" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">Demo Mode</h3>
+                <div className="mt-2 text-sm text-blue-700">
+                  <p>This creates a demo user profile. In a production environment, this would create a full user account with authentication.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Avatar Section */}
         <div className="flex items-center space-x-4">
           <img
@@ -258,7 +275,7 @@ export default function UserModal({ isOpen, onClose, user, mode, onSave }: UserM
               Cancel
             </Button>
             <Button type="submit" loading={loading}>
-              {mode === 'create' ? 'Create User' : 'Update User'}
+              {mode === 'create' ? 'Create User Profile' : 'Update User'}
             </Button>
           </div>
         )}

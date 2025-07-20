@@ -4,6 +4,7 @@ import Button from '../UI/Button';
 import Input from '../UI/Input';
 import ThemeToggle from '../UI/ThemeToggle';
 import { useAuth } from '../../hooks/useAuth';
+import { useSystemSettings } from '../../hooks/useSystemSettings';
 
 interface AuthFormProps {
   mode: 'signin' | 'signup';
@@ -12,6 +13,7 @@ interface AuthFormProps {
 
 export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
   const { signIn, signUp } = useAuth();
+  const { settings } = useSystemSettings();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -31,6 +33,10 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
         const { error } = await signIn(formData.email, formData.password);
         if (error) throw error;
       } else {
+        // Check if registration is enabled
+        if (!settings.registrationEnabled) {
+          throw new Error('Registration is currently disabled. Please contact an administrator.');
+        }
         const { error } = await signUp(formData.email, formData.password, formData.name);
         if (error) throw error;
       }
@@ -61,15 +67,26 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
             {mode === 'signin' ? 'Sign in to your account' : 'Create your account'}
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
-            <button
-              onClick={onToggleMode}
-              className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300"
-            >
-              {mode === 'signin' ? 'Sign up' : 'Sign in'}
-            </button>
-          </p>
+          {/* Only show toggle if registration is enabled or we're in signup mode */}
+          {(settings.registrationEnabled || mode === 'signup') && (
+            <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+              {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
+              <button
+                onClick={onToggleMode}
+                className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300"
+                disabled={mode === 'signin' && !settings.registrationEnabled}
+              >
+                {mode === 'signin' ? 'Sign up' : 'Sign in'}
+              </button>
+            </p>
+          )}
+          
+          {/* Show message when registration is disabled */}
+          {mode === 'signin' && !settings.registrationEnabled && (
+            <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
+              Registration is currently disabled. Contact your administrator for access.
+            </p>
+          )}
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -127,6 +144,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
             fullWidth
             loading={loading}
             className="group relative"
+            disabled={mode === 'signup' && !settings.registrationEnabled}
           >
             {mode === 'signin' ? 'Sign in' : 'Sign up'}
           </Button>

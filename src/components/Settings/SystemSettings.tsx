@@ -1,21 +1,12 @@
 import React, { useState } from 'react';
-import { Globe, Clock, DollarSign, Languages, Save, Database, RefreshCw } from 'lucide-react';
+import { Globe, Clock, DollarSign, Languages, Save, Database, RefreshCw, Shield, UserPlus } from 'lucide-react';
 import Button from '../UI/Button';
 import Select from '../UI/Select';
 import Input from '../UI/Input';
+import { useSystemSettings } from '../../hooks/useSystemSettings';
 
 export default function SystemSettings() {
-  const [settings, setSettings] = useState({
-    timezone: 'Asia/Manila',
-    dateFormat: 'MM/DD/YYYY',
-    currency: 'PHP',
-    language: 'English',
-    dataRetention: '12',
-    autoBackup: true,
-    backupFrequency: 'daily'
-  });
-  
-  const [loading, setLoading] = useState(false);
+  const { settings, loading, updateSettings } = useSystemSettings();
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const timezoneOptions = [
@@ -67,32 +58,27 @@ export default function SystemSettings() {
   ];
 
   const handleInputChange = (field: string, value: any) => {
-    setSettings(prev => ({ ...prev, [field]: value }));
     if (message) setMessage(null);
   };
 
   const handleSaveSettings = async () => {
-    setLoading(true);
-    
     try {
-      // In a real implementation, this would save to your backend
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      
+      const result = await updateSettings(settings);
+      if (result.success) {
       setMessage({ type: 'success', text: 'System settings saved successfully!' });
+      } else {
+        throw new Error(result.error || 'Failed to save settings');
+      }
     } catch (error) {
       console.error('Error saving system settings:', error);
       setMessage({ 
         type: 'error', 
         text: error instanceof Error ? error.message : 'Failed to save system settings' 
       });
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleRunBackup = async () => {
-    setLoading(true);
-    
     try {
       // In a real implementation, this would trigger a backup
       await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate backup process
@@ -104,8 +90,6 @@ export default function SystemSettings() {
         type: 'error', 
         text: error instanceof Error ? error.message : 'Failed to run backup' 
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -118,6 +102,61 @@ export default function SystemSettings() {
         </p>
       </div>
 
+      {/* Security Settings */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <h4 className="text-base font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+          <Shield className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
+          Security & Access Control
+        </h4>
+        
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+            <div className="flex items-start space-x-3">
+              <UserPlus className="w-5 h-5 text-gray-500 dark:text-gray-400 mt-0.5" />
+              <div>
+                <h5 className="text-sm font-medium text-gray-900 dark:text-white">User Registration</h5>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Allow new users to create accounts through the sign-up page
+                </p>
+                <div className="mt-2">
+                  <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
+                    settings.registrationEnabled 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                      : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                  }`}>
+                    {settings.registrationEnabled ? 'Enabled' : 'Disabled'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={settings.registrationEnabled}
+                onChange={(e) => updateSettings({ registrationEnabled: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+            </label>
+          </div>
+          
+          {!settings.registrationEnabled && (
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                <strong>Registration Disabled:</strong> New users cannot create accounts. Only administrators can add new users through the user management interface.
+              </p>
+            </div>
+          )}
+          
+          {settings.registrationEnabled && (
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                <strong>Registration Enabled:</strong> New users can create accounts through the sign-up page. Consider disabling this for enhanced security in production environments.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
       {/* Regional Settings */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h4 className="text-base font-medium text-gray-900 dark:text-white mb-4 flex items-center">
@@ -129,28 +168,28 @@ export default function SystemSettings() {
           <Select
             label="Timezone"
             value={settings.timezone}
-            onChange={(e) => handleInputChange('timezone', e.target.value)}
+            onChange={(e) => updateSettings({ timezone: e.target.value })}
             options={timezoneOptions}
           />
           
           <Select
             label="Date Format"
             value={settings.dateFormat}
-            onChange={(e) => handleInputChange('dateFormat', e.target.value)}
+            onChange={(e) => updateSettings({ dateFormat: e.target.value })}
             options={dateFormatOptions}
           />
           
           <Select
             label="Currency"
             value={settings.currency}
-            onChange={(e) => handleInputChange('currency', e.target.value)}
+            onChange={(e) => updateSettings({ currency: e.target.value })}
             options={currencyOptions}
           />
           
           <Select
             label="Language"
             value={settings.language}
-            onChange={(e) => handleInputChange('language', e.target.value)}
+            onChange={(e) => updateSettings({ language: e.target.value })}
             options={languageOptions}
           />
         </div>
@@ -167,7 +206,7 @@ export default function SystemSettings() {
           <Select
             label="Data Retention Period"
             value={settings.dataRetention}
-            onChange={(e) => handleInputChange('dataRetention', e.target.value)}
+            onChange={(e) => updateSettings({ dataRetention: e.target.value })}
             options={dataRetentionOptions}
             helperText="How long to keep historical data before archiving"
           />
@@ -181,7 +220,7 @@ export default function SystemSettings() {
                 <input
                   type="checkbox"
                   checked={settings.autoBackup}
-                  onChange={(e) => handleInputChange('autoBackup', e.target.checked)}
+                  onChange={(e) => updateSettings({ autoBackup: e.target.checked })}
                   className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                 />
                 <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
@@ -190,7 +229,7 @@ export default function SystemSettings() {
               </div>
               <Select
                 value={settings.backupFrequency}
-                onChange={(e) => handleInputChange('backupFrequency', e.target.value)}
+                onChange={(e) => updateSettings({ backupFrequency: e.target.value })}
                 options={backupFrequencyOptions}
                 className="w-32"
                 disabled={!settings.autoBackup}

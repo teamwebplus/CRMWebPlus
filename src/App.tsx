@@ -23,6 +23,7 @@ import BackupView from './components/Backup/BackupView';
 import CRUDTestView from './components/Testing/CRUDTestView';
 import { Users, Target, TrendingUp, DollarSign } from 'lucide-react';
 import { useDashboardStats } from './hooks/useDashboardStats';
+import { useSystemSettings } from './hooks/useSystemSettings';
 
 function AppContent() {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -224,8 +225,15 @@ function AppContent() {
 
 function App() {
   const { user, loading } = useAuth();
+  const { settings } = useSystemSettings();
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
 
+  // Force signin mode if registration is disabled
+  React.useEffect(() => {
+    if (!settings.registrationEnabled && authMode === 'signup') {
+      setAuthMode('signin');
+    }
+  }, [settings.registrationEnabled, authMode]);
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -239,7 +247,13 @@ function App() {
       <ThemeProvider>
         <AuthForm 
           mode={authMode} 
-          onToggleMode={() => setAuthMode(authMode === 'signin' ? 'signup' : 'signin')} 
+          onToggleMode={() => {
+            // Only allow toggle to signup if registration is enabled
+            if (authMode === 'signin' && !settings.registrationEnabled) {
+              return;
+            }
+            setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
+          }} 
         />
       </ThemeProvider>
     );
